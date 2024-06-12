@@ -77,8 +77,6 @@ client.once(Events.ClientReady, (readyClient) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-  console.log(interaction);
-
   // If the interaction is not a command, return
   if (!interaction.isChatInputCommand()) return;
 
