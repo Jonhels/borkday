@@ -60,7 +60,10 @@ module.exports = {
             entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
           ]);
         } catch (error) {
-          console.log("Connection lost, attempting to reconnect failed.");
+          console.log(
+            "Connection lost, attempting to reconnect failed.",
+            error,
+          );
           connection.destroy();
         }
       });
@@ -68,9 +71,23 @@ module.exports = {
 
     try {
       const player = createAudioPlayer();
-      const stream = ytdl(url, { filter: "audioonly" });
-      const resource = createAudioResource(stream);
+      const stream = ytdl(url, {
+        filter: "audioonly",
+        quality: "highestaudio",
+      });
 
+      // Adding event listeners to the YouTube stream
+      stream.on("info", (info, format) => {
+        console.log(
+          `Loaded stream with format: ${format.container} at ${format.audioBitrate} kbps`,
+        );
+      });
+      stream.on("error", (error) => {
+        console.error("Error from YTDL stream:", error);
+        interaction.followUp("Failed to load the video stream.");
+      });
+
+      const resource = createAudioResource(stream);
       player.play(resource);
       connection.subscribe(player);
 
@@ -82,6 +99,7 @@ module.exports = {
       player.on(AudioPlayerStatus.Idle, () => {
         console.log("The bot has finished playing the audio");
         connection.destroy(); // Ensure the connection is properly closed.
+        interaction.followUp("Playback has finished.");
       });
 
       player.on("error", (error) => {
