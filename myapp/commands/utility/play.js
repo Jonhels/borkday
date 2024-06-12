@@ -13,7 +13,7 @@ const ytdl = require("ytdl-core");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("play")
-    .setDescription("Play a song from youtube")
+    .setDescription("Play a song from YouTube")
     .addStringOption((option) =>
       option
         .setName("url")
@@ -21,22 +21,26 @@ module.exports = {
         .setRequired(true),
     ),
   async execute(interaction) {
+    await interaction.deferReply(); // Defer the reply to prevent timeout during the setup process.
+
     const url = interaction.options.getString("url");
 
     if (!interaction.member.voice.channel) {
-      return interaction.reply(
+      await interaction.followUp(
         "You need to be in a voice channel to play music, barkbark 🐶",
       );
+      return;
     }
 
     if (!ytdl.validateURL(url)) {
-      return interaction.reply(
+      await interaction.followUp(
         "Please provide a valid YouTube URL, barkbark 🐶",
       );
+      return;
     }
 
     const channel = interaction.member.voice.channel;
-    let connection = getVoiceConnection(interaction.guild.id);
+    let connection = getVoiceConnection(channel.guild.id);
 
     if (!connection) {
       connection = joinVoiceChannel({
@@ -77,20 +81,19 @@ module.exports = {
 
       player.on(AudioPlayerStatus.Idle, () => {
         console.log("The bot has finished playing the audio");
-        connection.destroy();
-        interaction.followUp("Playback has finished.");
+        connection.destroy(); // Ensure the connection is properly closed.
       });
 
       player.on("error", (error) => {
-        console.error(`Error: ${error.message}`);
-        connection.destroy();
+        console.error(`Error in audio player: ${error.message}`);
         interaction.followUp("An error occurred during playback.");
+        connection.destroy(); // Ensure the connection is properly closed on error.
       });
 
-      await interaction.reply(`Starting playback: ${url}`);
+      await interaction.editReply(`Starting playback: ${url}`);
     } catch (error) {
       console.error(`Error setting up the player: ${error}`);
-      await interaction.reply("Failed to play the video due to an error.");
+      await interaction.followUp("Failed to play the video due to an error.");
     }
   },
 };
