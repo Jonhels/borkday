@@ -5,7 +5,6 @@ const {
   createAudioResource,
   AudioPlayerStatus,
   VoiceConnectionStatus,
-  entersState,
   getVoiceConnection,
 } = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
