@@ -13,7 +13,9 @@ const { Client, Collection, Events, GatewayIntentBits } = require("discord.js");
 const token = process.env.DISCORD_BOT_TOKEN;
 
 // Create a new client instance
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
+});
 
 // Create a new collection for commands
 client.commands = new Collection();
