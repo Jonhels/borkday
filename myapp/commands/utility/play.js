@@ -59,6 +59,8 @@ module.exports = {
   },
 };
 
+const players = new Map();
+
 async function playSong(guildId, interaction, url) {
   let connection = getVoiceConnection(guildId);
   if (!connection) {
@@ -67,51 +69,42 @@ async function playSong(guildId, interaction, url) {
       guildId: guildId,
       adapterCreator: interaction.guild.voiceAdapterCreator,
     });
-    connection.on(VoiceConnectionStatus.Ready, () => {
-      console.log("Voice connection is ready!");
+  }
+
+  let player = players.get(guildId);
+  if (!player) {
+    player = createAudioPlayer();
+    connection.subscribe(player);
+    players.set(guildId, player);
+
+    player.on(AudioPlayerStatus.Playing, () => {
+      console.log("Audio is playing");
+      interaction.followUp(`Now playing: ${url}`);
     });
-    connection.on(VoiceConnectionStatus.Disconnected, async () => {
-      try {
-        await Promise.race([
-          entersState(connection, VoiceConnectionStatus.Signalling, 5_000),
-          entersState(connection, VoiceConnectionStatus.Connecting, 5_000),
-        ]);
-      } catch (error) {
-        console.log("Connection lost, attempting to reconnect failed.", error);
+
+    player.on(AudioPlayerStatus.Idle, () => {
+      console.log("The bot has finished playing the audio");
+      const songQueue = queue.get(guildId) || [];
+      songQueue.shift(); // Remove the played song from the queue
+      queue.set(guildId, songQueue); // Update the queue in the map
+      if (songQueue.length > 0) {
+        playSong(guildId, interaction, songQueue[0]); // Play the next song
+      } else {
         connection.destroy();
+        interaction.followUp("Playback has finished.");
+        players.delete(guildId); // Clean up the player map
       }
+    });
+
+    player.on("error", (error) => {
+      console.error(`Error in audio player: ${error.message}`);
+      interaction.followUp("An error occurred during playback.");
+      connection.destroy();
+      players.delete(guildId); // Clean up the player map
     });
   }
 
-  const player = createAudioPlayer();
   const stream = ytdl(url, { filter: "audioonly", quality: "highestaudio" });
   const resource = createAudioResource(stream);
-  connection.subscribe(player);
   player.play(resource);
-
-  // Access songQueue from the queue map
-  const songQueue = queue.get(guildId) || [];
-
-  player.on(AudioPlayerStatus.Playing, () => {
-    console.log("Audio is playing");
-    interaction.followUp(`Now playing: ${url}`);
-  });
-
-  player.on(AudioPlayerStatus.Idle, () => {
-    console.log("The bot has finished playing the audio");
-    songQueue.shift(); // Correctly use songQueue here
-    queue.set(guildId, songQueue); // Save the updated queue back
-    if (songQueue.length > 0) {
-      playSong(guildId, interaction, songQueue[0]); // Play the next song in the queue
-    } else {
-      connection.destroy();
-      interaction.followUp("Playback has finished.");
-    }
-  });
-
-  player.on("error", (error) => {
-    console.error(`Error in audio player: ${error.message}`);
-    interaction.followUp("An error occurred during playback.");
-    connection.destroy();
-  });
 }
