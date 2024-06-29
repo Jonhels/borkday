@@ -13,7 +13,7 @@ To start the server you need to have a discord bot token. You can get one by cre
 /server
 
 ## Hosting and running the bot
-You can either host the bot yourself or use the docker image that is provided. Command to run the bot with docker-compose: docker-compose up --build. You can also build it with docker build -t borkday . and run it with docker run borkday.
+You can either host the bot yourself with the docker image that is provided, or just use the one live. Command to run the bot with docker-compose: docker-compose up --build. You can also build it with docker build -t borkday . and run it with docker run borkday.
 
 ## Configuration
 To configure the bot you need to add the following environment variables:
