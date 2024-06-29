@@ -3,14 +3,19 @@ const fs = require("node:fs");
 const path = require("node:path");
 require("dotenv").config();
 
-// Require node-schedule for scheduling tasks
-const schedule = require("node-schedule");
-
 // Require discord.js library
-const { Client, Collection, Events, GatewayIntentBits } = require("discord.js");
+const {
+  Client,
+  Collection,
+  Events,
+  GatewayIntentBits,
+  REST,
+  Routes,
+} = require("discord.js");
 
 // Create a new const for token called token
-const token = process.env.DISCORD_BOT_TOKEN;
+const token = process.env.DISCORD_TOKEN;
+const clientId = process.env.CLIENT_ID;
 
 // Create a new client instance
 const client = new Client({
@@ -49,33 +54,30 @@ for (const folder of commandFolders) {
 // On client start event, log the client user tag to the console
 client.once(Events.ClientReady, (readyClient) => {
   console.log(`Client started. Logged in as ${readyClient.user.tag}`);
+});
 
-  // Create a new rule for scheduling tasks
-  const rule = new schedule.RecurrenceRule();
-  rule.hour = 23; // time in 24 hour format
-  rule.minute = 0;
-  rule.tz = "Europe/Oslo"; // Timezone dank
+client.on(Events.GuildCreate, async (guild) => {
+  console.log(`Joined new guild: ${guild.id}`);
 
-  // schedule a job to run at 23:00 every day
-  schedule.scheduleJob(rule, () => {
-    const today = new Date();
-    const thisYearsBirthday = new Date(today.getFullYear(), 5, 11); // 11th of June every year (0-indexed month)
-    let nextBirthday = thisYearsBirthday;
-    if (today >= thisYearsBirthday) {
-      // If today is after the birthday, set the next birthday to next year
-      nextBirthday = new Date(today.getFullYear() + 1, 5, 11);
-    }
-    const diff = nextBirthday - today;
-    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-    const message = `There are ${days} days until Alvin turns 30! Congratulations! 🎉🎉🎉. BarkBark 🐶🐶🐶`;
-    const channelId = process.env.BIRTHDAY_CHANNEL_ID;
-    const channel = client.channels.cache.get(channelId);
-    if (channel) {
-      channel.send(message);
-    } else {
-      console.log("Channel not found");
-    }
-  });
+  const commands = [];
+  for (const command of client.commands.values()) {
+    commands.push(command.data.toJSON());
+  }
+
+  const rest = new REST({ version: "10" }).setToken(token);
+
+  try {
+    console.log(`Deploying commands to guild: ${guild.id}`);
+    const data = await rest.put(
+      Routes.applicationGuildCommands(clientId, guild.id),
+      { body: commands },
+    );
+    console.log(
+      `Successfully deployed ${data.length} commands to guild: ${guild.id}`,
+    );
+  } catch (error) {
+    console.error(`Failed to deploy commands to guild: ${guild.id}`, error);
+  }
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {

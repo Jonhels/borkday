@@ -1,0 +1,6 @@
+# Dockerignore file for the project
+# This file is used to exclude files and directories from the docker build context
+
+# Exclude the following directories
+node_modules
+.env

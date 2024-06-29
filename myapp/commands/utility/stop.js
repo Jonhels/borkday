@@ -1,6 +1,9 @@
 const { SlashCommandBuilder } = require("discord.js");
-const { getVoiceConnection } = require("@discordjs/voice");
-const queue = require("./play").queue;
+const {
+  getVoiceConnection,
+  VoiceConnectionStatus,
+} = require("@discordjs/voice");
+const { queue, players } = require("./play");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -12,16 +15,28 @@ module.exports = {
 
     if (!connection) {
       return interaction.reply(
-        "Barkbark 🐶 I am not connected to any voice channel",
+        "Barkbark 🐶 I am not connected to any voice channel.",
       );
     }
 
-    // Clear the queue for this guild
-    if (queue.has(guildId)) {
-      queue.set(guildId, []); // Clear the queue
+    // Stop the player and remove it from the players map
+    const player = players.get(guildId);
+    if (player) {
+      player.stop();
+      players.delete(guildId);
     }
 
-    connection.destroy();
+    // Clear the queue
+    if (queue.has(guildId)) {
+      queue.set(guildId, []);
+      console.log(`Queue cleared for guild: ${guildId}`);
+    }
+
+    // Destroy the voice connection
+    if (connection.state.status !== VoiceConnectionStatus.Destroyed) {
+      connection.destroy();
+      console.log(`Voice connection destroyed for guild: ${guildId}`);
+    }
 
     await interaction.reply(
       "Barkbark 🐶 Stopped barking and cleared the queue 🐶",

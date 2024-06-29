@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { getVoiceConnection } = require("@discordjs/voice");
-const { queue } = require("./play");
+const { queue, players, playSong } = require("./play");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -19,7 +19,7 @@ module.exports = {
       return;
     }
 
-    const player = connection.state.subscription.player;
+    const player = players.get(guildId);
     const currentQueue = queue.get(guildId);
 
     if (!currentQueue || currentQueue.length === 0) {
@@ -35,7 +35,7 @@ module.exports = {
 
     if (currentQueue.length > 0) {
       const nextSongUrl = currentQueue[0];
-      require("./play").playSong(guildId, interaction, nextSongUrl);
+      playSong(guildId, interaction, nextSongUrl);
       // Inform about the number of songs left after skipping
       await interaction.followUp(
         `Skipped! 🎵 ${currentQueue.length} song(s) left in the queue.`,

@@ -1,0 +1,22 @@
+# docker-compose version, 3.8 is the latest version
+version: "3.8"
+# Services or containers, specifies the services that docker compose will manage and run
+services:
+  # myapp is the name of the container/service, name can be anything
+  myapp:
+    # build specifies the build context and Dockerfile location
+    build:
+      context: . # Build context location, this is the root directory (borkday)
+      dockerfile: myapp/Dockerfile # Dockerfile location (borkday/myapp/Dockerfile)
+    ports: # Port mapping, we are mapping the container port 6000 to the host port 6000
+      - "6000:6000"
+    # volumes specifies the volume mapping, we are mapping the host directory myapp to the container directory /app/myapp
+    # This is useful for development, as it allows us to make changes to the host directory and see the changes reflected in the container
+    volumes:
+      - ./myapp:/app/myapp
+    # env_file specifies the environment file, we are setting the environment variables in the .env file
+    env_file:
+      - myapp/.env
+    environment:
+      # NODE_ENV is set to production to run the app in production mode, this means that the app will run with optimizations and without debug information
+      - NODE_ENV=production

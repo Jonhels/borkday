@@ -10,11 +10,13 @@ const {
 } = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
 
-// Queue to store the songs
+// create a map to store the queue and players for each guild
 const queue = new Map();
+const players = new Map();
 
 module.exports = {
   queue,
+  players,
   playSong,
   data: new SlashCommandBuilder()
     .setName("play")
@@ -49,7 +51,7 @@ module.exports = {
     queue.set(guildId, songQueue);
 
     if (songQueue.length === 1) {
-      // Only try to play if it's the first song added
+      // If the queue length is 1, it means the bot is not playing any song
       playSong(guildId, interaction, songQueue[0]);
     } else {
       await interaction.followUp(
@@ -58,8 +60,6 @@ module.exports = {
     }
   },
 };
-
-const players = new Map();
 
 async function playSong(guildId, interaction, url) {
   let connection = getVoiceConnection(guildId);
@@ -71,40 +71,51 @@ async function playSong(guildId, interaction, url) {
     });
   }
 
-  let player = players.get(guildId);
-  if (!player) {
-    player = createAudioPlayer();
-    connection.subscribe(player);
-    players.set(guildId, player);
+  try {
+    await entersState(connection, VoiceConnectionStatus.Ready, 30e3);
+    let player = players.get(guildId);
+    if (!player) {
+      player = createAudioPlayer();
+      connection.subscribe(player);
+      players.set(guildId, player);
 
-    player.on(AudioPlayerStatus.Playing, () => {
-      console.log("Audio is playing");
-      interaction.followUp(`Now playing: ${url}`);
-    });
+      player.on(AudioPlayerStatus.Playing, () => {
+        console.log("Audio is playing");
+        interaction.followUp(`Now playing: ${url}`);
+      });
 
-    player.on(AudioPlayerStatus.Idle, () => {
-      console.log("The bot has finished playing the audio");
-      const songQueue = queue.get(guildId) || [];
-      songQueue.shift(); // Remove the played song from the queue
-      queue.set(guildId, songQueue); // Update the queue in the map
-      if (songQueue.length > 0) {
-        playSong(guildId, interaction, songQueue[0]); // Play the next song
-      } else {
+      player.on(AudioPlayerStatus.Idle, () => {
+        console.log("The bot has finished playing the audio");
+        const songQueue = queue.get(guildId) || [];
+        // Remove the current song from the queue, shift() returns the removed element
+        // use shift here to remove the first element in the queue, which is the current song
+        songQueue.shift();
+        // Update the queue
+        queue.set(guildId, songQueue);
+        if (songQueue.length > 0) {
+          // Play the next song in the queue
+          playSong(guildId, interaction, songQueue[0]);
+        } else {
+          connection.destroy();
+          interaction.followUp("Playback has finished.");
+          // Clean up the player map
+          players.delete(guildId);
+        }
+      });
+
+      player.on("error", (error) => {
+        console.error(`Error in audio player: ${error.message}`);
+        interaction.followUp("An error occurred during playback.");
         connection.destroy();
-        interaction.followUp("Playback has finished.");
-        players.delete(guildId); // Clean up the player map
-      }
-    });
+        players.delete(guildId);
+      });
+    }
 
-    player.on("error", (error) => {
-      console.error(`Error in audio player: ${error.message}`);
-      interaction.followUp("An error occurred during playback.");
-      connection.destroy();
-      players.delete(guildId); // Clean up the player map
-    });
+    const stream = ytdl(url, { filter: "audioonly", quality: "highestaudio" });
+    const resource = createAudioResource(stream, { inputType: "webm/opus" });
+    player.play(resource);
+  } catch (error) {
+    console.error(`Error in playing audio: ${error.message}`);
+    interaction.followUp("An error occurred while trying to play the audio.");
   }
-
-  const stream = ytdl(url, { filter: "audioonly", quality: "highestaudio" });
-  const resource = createAudioResource(stream);
-  player.play(resource);
 }
