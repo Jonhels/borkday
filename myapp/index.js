@@ -2,6 +2,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 require("dotenv").config();
+const logger = require("./logger");
 
 // Require discord.js library
 const {
@@ -44,7 +45,7 @@ for (const folder of commandFolders) {
     if ("data" in command && "execute" in command) {
       client.commands.set(command.data.name, command);
     } else {
-      console.log(
+      logger.warn(
         `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,
       );
     }
@@ -53,11 +54,11 @@ for (const folder of commandFolders) {
 
 // On client start event, log the client user tag to the console
 client.once(Events.ClientReady, (readyClient) => {
-  console.log(`Client started. Logged in as ${readyClient.user.tag}`);
+  logger.info(`Client started. Logged in as ${readyClient.user.tag}`);
 });
 
 client.on(Events.GuildCreate, async (guild) => {
-  console.log(`Joined new guild: ${guild.id}`);
+  logger.info(`Joined new guild: ${guild.id}`);
 
   const commands = [];
   for (const command of client.commands.values()) {
@@ -67,16 +68,16 @@ client.on(Events.GuildCreate, async (guild) => {
   const rest = new REST({ version: "10" }).setToken(token);
 
   try {
-    console.log(`Deploying commands to guild: ${guild.id}`);
+    logger.info(`Deploying commands to guild: ${guild.id}`);
     const data = await rest.put(
       Routes.applicationGuildCommands(clientId, guild.id),
       { body: commands },
     );
-    console.log(
+    logger.info(
       `Successfully deployed ${data.length} commands to guild: ${guild.id}`,
     );
   } catch (error) {
-    console.error(`Failed to deploy commands to guild: ${guild.id}`, error);
+    logger.error(`Failed to deploy commands to guild: ${guild.id}`, error);
   }
 });
 
@@ -87,14 +88,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
   const command = interaction.client.commands.get(interaction.commandName);
 
   if (!command) {
-    console.error(`No command matching ${interaction.commandName} was found`);
+    logger.error(`No command matching ${interaction.commandName} was found`);
     return;
   }
 
   try {
     await command.execute(interaction);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
 
     // If the interaction was replied to or deferred, follow up with an error message
     if (interaction.replied || interaction.deferred) {

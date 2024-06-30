@@ -80,12 +80,12 @@ async function playSong(guildId, interaction, url) {
       players.set(guildId, player);
 
       player.on(AudioPlayerStatus.Playing, () => {
-        console.log("Audio is playing");
+        logger.info("Audio is playing");
         interaction.followUp(`Now playing: ${url}`);
       });
 
       player.on(AudioPlayerStatus.Idle, () => {
-        console.log("The bot has finished playing the audio");
+        logger.info("The bot has finished playing the audio");
         const songQueue = queue.get(guildId) || [];
         // Remove the current song from the queue, shift() returns the removed element
         // use shift here to remove the first element in the queue, which is the current song
@@ -104,7 +104,7 @@ async function playSong(guildId, interaction, url) {
       });
 
       player.on("error", (error) => {
-        console.error(`Error in audio player: ${error.message}`);
+        logger.error(`Error in audio player: ${error.message}`);
         interaction.followUp("An error occurred during playback.");
         connection.destroy();
         players.delete(guildId);
@@ -115,7 +115,7 @@ async function playSong(guildId, interaction, url) {
     const resource = createAudioResource(stream, { inputType: "webm/opus" });
     player.play(resource);
   } catch (error) {
-    console.error(`Error in playing audio: ${error.message}`);
+    logger.error(`Error in playing audio: ${error.message}`);
     interaction.followUp("An error occurred while trying to play the audio.");
   }
 }

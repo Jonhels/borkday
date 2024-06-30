@@ -29,13 +29,13 @@ module.exports = {
     // Clear the queue
     if (queue.has(guildId)) {
       queue.set(guildId, []);
-      console.log(`Queue cleared for guild: ${guildId}`);
+      logger.info(`Queue cleared for guild: ${guildId}`);
     }
 
     // Destroy the voice connection
     if (connection.state.status !== VoiceConnectionStatus.Destroyed) {
       connection.destroy();
-      console.log(`Voice connection destroyed for guild: ${guildId}`);
+      logger.info(`Voice connection destroyed for guild: ${guildId}`);
     }
 
     await interaction.reply(
