@@ -9,7 +9,7 @@ const {
   getVoiceConnection,
 } = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
-const logger = require("./logger");
+const logger = require("../../logger");
 
 // create a map to store the queue and players for each guild
 const queue = new Map();
