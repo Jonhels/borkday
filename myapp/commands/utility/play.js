@@ -39,6 +39,12 @@ module.exports = {
       return;
     }
 
+    if (!url.includes("youtube.com/watch?v=")) {
+      await interaction.followUp(
+        "Please provide a valid YouTube URL, barkbark 🐶",
+      );
+      return;
+    }
     if (!ytdl.validateURL(url)) {
       await interaction.followUp(
         "Please provide a valid YouTube URL, barkbark 🐶",
