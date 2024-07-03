@@ -4,6 +4,8 @@ Borkday is a simple dockerized discord.js bot that can be used to play youtube s
 
 To start the server you need to have a discord bot token. You can get one by creating a new bot at the discord developer portal. Add the token to the .env file and run the bot with docker-compose --build. The bot will then be online and you can invite it to your server.
 
+## Dockerhub
+
 ## Commands
 /play
 /stop
