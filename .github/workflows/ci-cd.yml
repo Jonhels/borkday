@@ -38,14 +38,6 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      - name: Set Railway Variables
-        run: |
-          export RAILWAY_TOKEN=${{ secrets.RAILWAY_TOKEN }}
-          railway variables set CLIENT_ID=${{ secrets.CLIENT_ID }}
-          railway variables set DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
       - name: Deploy to Railway
         run: |
           export RAILWAY_TOKEN=${{ secrets.RAILWAY_TOKEN }}
