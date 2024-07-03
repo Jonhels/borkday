@@ -38,6 +38,12 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
+      - name: Link Railway project (first-time setup)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.run_number == 1
+        run: railway link --project <your_project_id>
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
       - name: Deploy to Railway
         run: railway up --service borkday
         env:
