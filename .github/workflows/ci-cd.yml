@@ -38,11 +38,6 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      - name: Initialize Railway Project
-        run: railway init --name borkday
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
       - name: Link Railway Project
         run: railway link caa4cb31-306e-4fbd-bd09-759d41f9767a
         env:
