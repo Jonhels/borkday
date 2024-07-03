@@ -38,9 +38,13 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      - name: Link Railway project (first-time setup)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.run_number == 1
-        run: railway link --project <your_project_id>
+      - name: Authenticate Railway CLI
+        run: railway login --token ${{ secrets.RAILWAY_TOKEN }}
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Link Railway project (if not already linked)
+        run: railway link --project <your_project_id> || echo "Project already linked"
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
