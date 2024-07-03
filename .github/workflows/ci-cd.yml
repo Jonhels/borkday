@@ -41,11 +41,6 @@ jobs:
       - name: Initialize and Deploy Railway Project
         run: |
           export RAILWAY_TOKEN=${{ secrets.RAILWAY_TOKEN }}
-          if railway status; then
-            railway up --service borkday
-          else
-            railway init
-            railway up --service borkday
-          fi
+          railway up --service borkday
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
