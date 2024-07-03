@@ -40,8 +40,8 @@ jobs:
 
       - name: Set Railway Variables
         run: |
-          railway variables set CLIENT_ID=${{ secrets.CLIENT_ID }}
-          railway variables set DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+          railway variables CLIENT_ID=${{ secrets.CLIENT_ID }}
+          railway variables DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
