@@ -39,7 +39,7 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Initialize Railway Project
-        run: railway init --service borkday
+        run: railway init --name borkday
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
