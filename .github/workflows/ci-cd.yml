@@ -35,15 +35,10 @@ jobs:
       - name: Push Docker image to Docker Hub
         run: docker push ${{ secrets.DOCKER_USERNAME }}/borkday:latest
 
+      # install railway cli
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      - name: Link Railway Project
-        run: railway link ${{ secrets.RAILWAY_PROJECT }}
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
-      - name: Deploy to Railway
-        run: railway up --service borkday
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      # login to railway through token
+      - name: Login to Railway
+        run: ${{secrets.RAILWAY_TOKEN}} railway run
