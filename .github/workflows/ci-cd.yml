@@ -41,7 +41,7 @@ jobs:
 
       # deploy to railway
       - name: Deploy to Railway
-        run: railway up --service borkday
+        run: railway up
         working-directory: ./myapp
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
