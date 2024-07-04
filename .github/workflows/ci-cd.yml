@@ -39,18 +39,6 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      # set discord token enviroment variable to service
-      - name: Set Discord Token
-        run: railway variables DISCORD_TOKEN ${{ secrets.DISCORD_TOKEN }} --service ${{ secrets.RAILWAY_SERVICE_NAME }}
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
-      # set CLIENT_ID enviroment variable to service
-      - name: Set Client ID
-        run: railway variables CLIENT_ID ${{ secrets.CLIENT_ID }} --service ${{ secrets.RAILWAY_SERVICE_NAME }}
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
       # deploy to railway
       - name: Deploy to Railway
         run: railway up --service ${{ secrets.RAILWAY_SERVICE_NAME}}
