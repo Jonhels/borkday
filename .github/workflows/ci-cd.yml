@@ -40,6 +40,13 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
+      # check if service exists if not create it
+      - name: Check if service exists
+        run: railway service:exists ${{ secrets.RAILWAY_SERVICE_NAME }} || railway service:create ${{ secrets.RAILWAY_SERVICE_NAME}}
+        working-directory: ./myapp
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
       # deploy to railway
       - name: Deploy to Railway
         run: railway up --service ${{ secrets.RAILWAY_SERVICE_NAME}}
