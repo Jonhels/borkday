@@ -149,8 +149,12 @@ async function playSong(guildId, interaction, url) {
       players.set(guildId, player);
 
       player.on(AudioPlayerStatus.Playing, () => {
-        logger.info("Audio is playing");
-        interaction.followUp(`Now playing: ${url}`);
+        const songQueue = queue.get(guildId); // Ensure you fetch the latest queue state
+        if (songQueue.length > 0) {
+          const currentUrl = songQueue[0]; // Always get the first song as the current
+          logger.info(`Now playing: ${currentUrl}`);
+          interaction.followUp(`Now playing: ${currentUrl}`);
+        }
       });
 
       player.on(AudioPlayerStatus.Idle, async () => {
