@@ -70,6 +70,13 @@ async function addPlaylistToQueue(interaction, url) {
     return;
   }
 
+  // check if playlist is a radio or mix playlist, currently not supported
+  if (playlistId.startsWith("RD") || playlistId.startsWith("UL")) {
+    await interaction.followUp(
+      "Radio and mix playlists are currently not supported, barkbark 🐶",
+    );
+    return;
+  }
   try {
     // Fetch the playlist details, limit to 5 songs at a time
     const playlist = await ytpl(playlistId, { limit: 5 });
