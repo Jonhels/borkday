@@ -215,6 +215,7 @@ async function playSong(guildId, interaction, url) {
 // Stop command will clear the queue and stop the playback
 async function fetchAdditionalVideos(playlistId, limit) {
   try {
+    logger.info(`Fetching additional videos for playlist: ${playlistId}`);
     const playlist = await ytpl(playlistId, { limit });
     return playlist.items.map((item) => item.shortUrl);
   } catch (error) {
