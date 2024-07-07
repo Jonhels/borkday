@@ -33,9 +33,25 @@ module.exports = {
     await interaction.deferReply();
 
     const url = interaction.options.getString("url");
-    if (!interaction.member.voice.channel) {
+    const guildId = interaction.guildId;
+    const userVoiceChannel = interaction.member.voice.channel;
+
+    // Check if the user is in a voice channel
+
+    if (!userVoiceChannel) {
       await interaction.followUp(
         "You need to be in a voice channel to play music, barkbark 🐶",
+      );
+      return;
+    }
+
+    // Check if the bot has permission to join and speak in the voice channel
+    const connection = getVoiceConnection(guildId);
+
+    // Check if bot is connected in another channel
+    if (connection && connection.joinConfig.channelId !== userVoiceChannel.id) {
+      await interaction.followUp(
+        "Barkbark 🐶 I am already connected to a different voice channel.",
       );
       return;
     }
