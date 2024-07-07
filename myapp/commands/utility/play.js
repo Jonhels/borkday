@@ -166,7 +166,7 @@ async function playSong(guildId, interaction, url) {
         queue.set(guildId, songQueue);
 
         // Check if more videos need to be added to the queue
-        if (songQueue.length < 5) {
+        if (songQueue.length < 4) {
           const playlistIdMatch = url.match(/(?:list=)([a-zA-Z0-9_-]+)/);
           const playlistId = playlistIdMatch ? playlistIdMatch[1] : null;
           if (playlistId) {
