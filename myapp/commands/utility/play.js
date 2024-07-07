@@ -78,7 +78,7 @@ async function addPlaylistToQueue(interaction, url) {
     return;
   }
   try {
-    // Fetch the playlist details, limit to 5 songs at a time
+    // Fetch the playlist details
     const playlist = await ytpl(playlistId, { limit: Infinity });
 
     const songQueue = queue.get(guildId) || [];
@@ -96,7 +96,7 @@ async function addPlaylistToQueue(interaction, url) {
     }
 
     await interaction.followUp(
-      `Playlist added to the queue: ${playlist.title}. Barkbark 🐶`,
+      `Playlist added to the queue: ${playlist.title}. Playlist length: ${playlist.items.length}. Barkbark 🐶`,
     );
   } catch (error) {
     logger.error(`Error in adding playlist to queue: ${error.message}`);
