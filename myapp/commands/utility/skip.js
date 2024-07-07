@@ -20,6 +20,19 @@ module.exports = {
       return;
     }
 
+    // Get the voice channel of the member who triggered the command
+    const userVoiceChannel = interaction.member.voice.channel;
+
+    if (
+      !userVoiceChannel ||
+      userVoiceChannel.id !== connection.joinConfig.channelId
+    ) {
+      await interaction.followUp(
+        "Barkbark 🐶 You need to be in the same voice channel to skip songs.",
+      );
+      return;
+    }
+
     const player = players.get(guildId);
     const currentQueue = queue.get(guildId);
 

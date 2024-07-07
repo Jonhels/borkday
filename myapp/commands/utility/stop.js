@@ -20,6 +20,18 @@ module.exports = {
       );
     }
 
+    // Check if the command issuer is in the same voice channel as the bot
+    const userVoiceChannel = interaction.member.voice.channel;
+    if (
+      !userVoiceChannel ||
+      userVoiceChannel.id !== connection.joinConfig.channelId
+    ) {
+      await interaction.reply(
+        "Barkbark 🐶 You need to be in the same voice channel to stop the music.",
+      );
+      return;
+    }
+
     // Stop the player and remove it from the players map
     const player = players.get(guildId);
     if (player) {
