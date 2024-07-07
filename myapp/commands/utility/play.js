@@ -79,7 +79,7 @@ async function addPlaylistToQueue(interaction, url) {
   }
   try {
     // Fetch the playlist details, limit to 5 songs at a time
-    const playlist = await ytpl(playlistId, { limit: 5 });
+    const playlist = await ytpl(playlistId, { limit: Infinity });
 
     const songQueue = queue.get(guildId) || [];
     const videoUrls = playlist.items.map((item) => item.shortUrl);
@@ -90,12 +90,13 @@ async function addPlaylistToQueue(interaction, url) {
 
     queue.set(guildId, songQueue);
 
+    // If the queue length is equal to the number of videos in the playlist, start playing the first song
     if (songQueue.length === videoUrls.length) {
       playSong(guildId, interaction, songQueue[0]);
     }
 
     await interaction.followUp(
-      `Playlist added to the queue: ${playlist.title}, added the first 5 songs. Barkbark 🐶`,
+      `Playlist added to the queue: ${playlist.title}. Barkbark 🐶`,
     );
   } catch (error) {
     logger.error(`Error in adding playlist to queue: ${error.message}`);
@@ -165,24 +166,6 @@ async function playSong(guildId, interaction, url) {
         // Update the queue
         queue.set(guildId, songQueue);
 
-        // Check if more videos need to be added to the queue
-        if (songQueue.length < 4) {
-          const playlistIdMatch = url.match(/(?:list=)([a-zA-Z0-9_-]+)/);
-          const playlistId = playlistIdMatch ? playlistIdMatch[1] : null;
-          if (playlistId) {
-            // fetch additional videos from the playlist, 5 at a time
-            const additionalVideos = await fetchAdditionalVideos(playlistId, 5);
-            for (const videoUrl of additionalVideos) {
-              songQueue.push(videoUrl);
-            }
-            queue.set(guildId, songQueue);
-            // Inform the user that more songs have been added to the queue
-            await interaction.followUp(
-              `Fetched and added 5 more songs from the playlist to the queue. Barkbark 🐶`,
-            );
-          }
-        }
-
         if (songQueue.length > 0) {
           // Play the next song in the queue
           playSong(guildId, interaction, songQueue[0]);
@@ -208,18 +191,5 @@ async function playSong(guildId, interaction, url) {
   } catch (error) {
     logger.error(`Error in playing audio: ${error.message}`);
     interaction.followUp("An error occurred while trying to play the audio.");
-  }
-}
-
-// Function to fetch additional videos from a playlist, limit to 5 videos
-// Stop command will clear the queue and stop the playback
-async function fetchAdditionalVideos(playlistId, limit) {
-  try {
-    logger.info(`Fetching additional videos for playlist: ${playlistId}`);
-    const playlist = await ytpl(playlistId, { limit });
-    return playlist.items.map((item) => item.shortUrl);
-  } catch (error) {
-    logger.error(`Error in fetching additional videos: ${error.message}`);
-    return [];
   }
 }
