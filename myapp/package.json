@@ -13,6 +13,7 @@
     "node-schedule": "^2.1.1",
     "opusscript": "^0.0.8",
     "winston": "^3.13.0",
-    "ytdl-core": "^4.11.5"
+    "ytdl-core": "^4.11.5",
+    "ytpl": "^2.3.0"
   }
 }

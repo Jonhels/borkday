@@ -10,8 +10,9 @@ const {
 } = require("@discordjs/voice");
 const ytdl = require("ytdl-core");
 const logger = require("../../logger");
+const ytpl = require("ytpl");
 
-// create a map to store the queue and players for each guild
+// Create a map to store the queue and players for each guild
 const queue = new Map();
 const players = new Map();
 
@@ -21,11 +22,11 @@ module.exports = {
   playSong,
   data: new SlashCommandBuilder()
     .setName("play")
-    .setDescription("Play a song from YouTube")
+    .setDescription("Play a song or playlist from YouTube")
     .addStringOption((option) =>
       option
         .setName("url")
-        .setDescription("The YouTube URL of the song")
+        .setDescription("The YouTube URL of the song or playlist")
         .setRequired(true),
     ),
   async execute(interaction) {
@@ -39,35 +40,97 @@ module.exports = {
       return;
     }
 
-    if (!url.includes("youtube.com/watch?v=")) {
-      await interaction.followUp(
-        "Please provide a valid YouTube URL, barkbark 🐶",
-      );
-      return;
-    }
-    if (!ytdl.validateURL(url)) {
+    const isPlaylist = url.includes("list=");
+
+    if (!isPlaylist && !url.includes("youtube.com/watch?v=")) {
       await interaction.followUp(
         "Please provide a valid YouTube URL, barkbark 🐶",
       );
       return;
     }
 
-    const guildId = interaction.guildId;
-    const songQueue = queue.get(guildId) || [];
-    songQueue.push(url);
-    queue.set(guildId, songQueue);
-
-    if (songQueue.length === 1) {
-      // If the queue length is 1, it means the bot is not playing any song
-      playSong(guildId, interaction, songQueue[0]);
+    if (isPlaylist) {
+      await addPlaylistToQueue(interaction, url);
     } else {
-      await interaction.followUp(
-        `Song added to queue: ${url}, queue length: ${songQueue.length}. Barkbark 🐶`,
-      );
+      await addSongToQueue(interaction, url);
     }
   },
 };
 
+// Add support for YouTube playlist (ytpl)
+async function addPlaylistToQueue(interaction, url) {
+  const guildId = interaction.guildId;
+  const playlistIdMatch = url.match(/(?:list=)([a-zA-Z0-9_-]+)/);
+  const playlistId = playlistIdMatch ? playlistIdMatch[1] : null;
+
+  if (!playlistId) {
+    await interaction.followUp(
+      "Please provide a valid YouTube playlist URL, barkbark 🐶",
+    );
+    return;
+  }
+
+  // check if playlist is a radio or mix playlist, currently not supported
+  if (playlistId.startsWith("RD") || playlistId.startsWith("UL")) {
+    await interaction.followUp(
+      "Radio and mix playlists are currently not supported, barkbark 🐶",
+    );
+    return;
+  }
+  try {
+    // Fetch the playlist details
+    const playlist = await ytpl(playlistId, { limit: Infinity });
+
+    const songQueue = queue.get(guildId) || [];
+    const videoUrls = playlist.items.map((item) => item.shortUrl);
+
+    for (const videoUrl of videoUrls) {
+      songQueue.push(videoUrl);
+    }
+
+    queue.set(guildId, songQueue);
+
+    // If the queue length is equal to the number of videos in the playlist, start playing the first song
+    if (songQueue.length === videoUrls.length) {
+      playSong(guildId, interaction, songQueue[0]);
+    }
+
+    await interaction.followUp(
+      `Playlist added to the queue: ${playlist.title}. Playlist length: ${playlist.items.length}. Barkbark 🐶`,
+    );
+  } catch (error) {
+    logger.error(`Error in adding playlist to queue: ${error.message}`);
+    await interaction.followUp(
+      "An error occurred while adding the playlist to the queue. Barkbark 🐶",
+    );
+  }
+}
+
+// Add support for adding a single song to the queue
+async function addSongToQueue(interaction, url) {
+  if (!ytdl.validateURL(url)) {
+    await interaction.followUp(
+      "Please provide a valid YouTube URL, barkbark 🐶",
+    );
+    return;
+  }
+
+  const guildId = interaction.guildId;
+  const songQueue = queue.get(guildId) || [];
+  songQueue.push(url);
+  queue.set(guildId, songQueue);
+
+  if (songQueue.length === 1) {
+    // If the queue length is 1, it means the bot is not playing any song
+    playSong(guildId, interaction, songQueue[0]);
+  } else {
+    await interaction.followUp(
+      `Song added to queue: ${url}, queue length: ${songQueue.length}. Barkbark 🐶`,
+    );
+  }
+}
+
+// playSong function to play the song, fetch additional videos from the playlist, and update the queue
 async function playSong(guildId, interaction, url) {
   let connection = getVoiceConnection(guildId);
   if (!connection) {
@@ -87,18 +150,22 @@ async function playSong(guildId, interaction, url) {
       players.set(guildId, player);
 
       player.on(AudioPlayerStatus.Playing, () => {
-        logger.info("Audio is playing");
-        interaction.followUp(`Now playing: ${url}`);
+        const songQueue = queue.get(guildId); // Ensure you fetch the latest queue state
+        if (songQueue.length > 0) {
+          const currentUrl = songQueue[0]; // Always get the first song as the current
+          logger.info(`Now playing: ${currentUrl}`);
+          interaction.followUp(`Now playing: ${currentUrl}`);
+        }
       });
 
-      player.on(AudioPlayerStatus.Idle, () => {
+      player.on(AudioPlayerStatus.Idle, async () => {
         logger.info("The bot has finished playing the audio");
         const songQueue = queue.get(guildId) || [];
         // Remove the current song from the queue, shift() returns the removed element
-        // use shift here to remove the first element in the queue, which is the current song
         songQueue.shift();
         // Update the queue
         queue.set(guildId, songQueue);
+
         if (songQueue.length > 0) {
           // Play the next song in the queue
           playSong(guildId, interaction, songQueue[0]);
