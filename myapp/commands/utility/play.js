@@ -193,17 +193,13 @@ async function playSong(guildId, interaction, url) {
         }
       });
 
-      // player error event, if stream error is not handled
       player.on("error", (error) => {
-        // check flag before handling error
-        if (!streamErrorHandled) {
-          logger.error(`Error in audio player: ${error.message}`);
-          interaction.followUp(
-            `An error occurred while playing the audio: ${url}, Error: ${error.message}, barkbark 🐶`,
-          );
-          connection.destroy();
-          players.delete(guildId);
-        }
+        logger.error(`Error in audio player: ${error.message}`);
+        interaction.followUp(
+          `An error occurred while playing the audio: ${url}, Error: ${error.message}, barkbark 🐶`,
+        );
+        connection.destroy();
+        players.delete(guildId);
       });
     }
 
