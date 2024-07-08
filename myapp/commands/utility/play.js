@@ -202,6 +202,25 @@ async function playSong(guildId, interaction, url) {
     }
 
     const stream = ytdl(url, { filter: "audioonly", quality: "highestaudio" });
+    stream.on("error", (error) => {
+      // Log error, notify users, update queue, and attempt to play next song
+      logger.error(`YTDL error with URL ${url}: ${error.message}`);
+      interaction.followUp(`Skipping unplayable video: ${url}`);
+
+      const songQueue = queue.get(guildId) || [];
+      songQueue.shift(); // Remove the problematic song
+      queue.set(guildId, songQueue);
+
+      if (songQueue.length > 0) {
+        playSong(guildId, interaction, songQueue[0]);
+      } else {
+        connection.destroy();
+        interaction.followUp("All songs in queue were unplayable.");
+        players.delete(guildId);
+      }
+    });
+
+    // Create an audio resource and play the audio
     const resource = createAudioResource(stream, { inputType: "webm/opus" });
     player.play(resource);
   } catch (error) {
