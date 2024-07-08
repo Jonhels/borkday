@@ -201,43 +201,28 @@ async function playSong(guildId, interaction, url) {
       });
     }
 
-    // Fetch the audio stream with ytdl-core
-    const stream = ytdl(url, {
-      filter: "audioonly",
-      quality: "highestaudio",
-    }).catch((error) => {
-      // if error log it and notify the user
+    const stream = ytdl(url, { filter: "audioonly", quality: "highestaudio" });
+    stream.on("error", (error) => {
+      // Log error, notify users, update queue, and attempt to play next song
       logger.error(`YTDL error with URL ${url}: ${error.message}`);
       interaction.followUp(`Skipping unplayable video: ${url}`);
 
-      // Remove unplayable video from the queue
       const songQueue = queue.get(guildId) || [];
-      // Remove the current song from the queue, shift() returns the removed element
-      songQueue.shift();
-      // Update the queue
+      songQueue.shift(); // Remove the problematic song
       queue.set(guildId, songQueue);
 
-      // Play the next song in the queue or stop if the queue is empty
       if (songQueue.length > 0) {
-        // Play the next song in the queue, 0 means the first song in the queue since we removed the current song
         playSong(guildId, interaction, songQueue[0]);
       } else {
-        // if the queue is empty, stop the player and destroy the connection
         connection.destroy();
         interaction.followUp("All songs in queue were unplayable.");
-        // Clean up the player map.
-        players.delete(guildId); // Players is a Map, so use the delete method. Guildid is the key..
+        players.delete(guildId);
       }
-      // return null to prevent the catch from throwing an error
-      return null;
     });
 
-    // only play the audio if the stream is available, we do this to prevent playing null streams when the video is unplayable
-    if (stream) {
-      // webm/opus is the only supported format for now. This is the format that ytdl-core returns.
-      const resource = createAudioResource(stream, { inputType: "webm/opus" });
-      player.play(resource);
-    }
+    // Create an audio resource and play the audio
+    const resource = createAudioResource(stream, { inputType: "webm/opus" });
+    player.play(resource);
   } catch (error) {
     logger.error(`Error in playing audio: ${error.message}`);
     interaction.followUp("An error occurred while trying to play the audio.");
