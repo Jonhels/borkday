@@ -201,19 +201,7 @@ async function playSong(guildId, interaction, url) {
       });
     }
 
-    // format is mp4a.40.2, and container is mp4. We want to extract the audio stream
-    const stream = ytdl(url, {
-      quality: "highestaudio",
-      filter: (format) =>
-        format.container === "mp4" && format.audioCodec === "mp4a.40.2",
-    });
-
-    stream.on("info", (info) => {
-      logger.info(
-        `Selected format: ${info.formats.map((f) => `${f.container}, ${f.audioCodec}`).join("; ")}`,
-      );
-    });
-
+    const stream = ytdl(url, { filter: "audioonly", quality: "highest" });
     const resource = createAudioResource(stream, { inputType: "webm/opus" });
     player.play(resource);
   } catch (error) {
