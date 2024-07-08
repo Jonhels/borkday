@@ -223,7 +223,9 @@ async function playSong(guildId, interaction, url) {
       // check flag before handling error
       if (!streamErrorHandled) {
         logger.error(`Error in audio player: ${error.message}`);
-        interaction.followUp("An error occurred during playback.");
+        interaction.followUp(
+          `An error occurred while playing the audio: ${url},  Error: ${error.message}`,
+        );
         connection.destroy();
         players.delete(guildId);
       }
