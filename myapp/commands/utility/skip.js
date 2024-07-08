@@ -3,6 +3,9 @@ const { getVoiceConnection } = require("@discordjs/voice");
 const { queue, players, playSong } = require("./play");
 const logger = require("../../logger");
 
+let skipTime = 0; // Time of the last skip command
+const skipCooldown = 5000; // Cooldown time in milliseconds
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("skip")
@@ -33,6 +36,17 @@ module.exports = {
       return;
     }
 
+    const currentTime = Date.now();
+    if (currentTime < skipTime + skipCooldown) {
+      const timeLeft = Math.ceil(
+        (skipTime + skipCooldown - currentTime) / 1000,
+      );
+      await interaction.followUp(
+        `Please wait ${timeLeft} more second(s) to skip again.`,
+      );
+      return;
+    }
+
     const player = players.get(guildId);
     const currentQueue = queue.get(guildId);
 
@@ -59,5 +73,6 @@ module.exports = {
         "Barkbark 🐶 No more songs in the queue. The queue is now empty.",
       );
     }
+    skipTime = currentTime;
   },
 };
