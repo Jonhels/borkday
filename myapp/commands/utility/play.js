@@ -192,15 +192,23 @@ async function playSong(guildId, interaction, url) {
           players.delete(guildId);
         }
       });
-    }
 
-    // flag for handling stream error
-    let streamErrorHandled = false;
+      // player error event, if stream error is not handled
+      player.on("error", (error) => {
+        // check flag before handling error
+        if (!streamErrorHandled) {
+          logger.error(`Error in audio player: ${error.message}`);
+          interaction.followUp(
+            `An error occurred while playing the audio: ${url}, Error: ${error.message}, barkbark 🐶`,
+          );
+          connection.destroy();
+          players.delete(guildId);
+        }
+      });
+    }
 
     const stream = ytdl(url, { filter: "audioonly", quality: "highestaudio" });
     stream.on("error", (error) => {
-      // flag is set to true
-      streamErrorHandled = true;
       // Log error, notify users, update queue, and attempt to play next song
       logger.error(`YTDL error with URL ${url}: ${error.message}`);
       interaction.followUp(`Skipping unplayable video: ${url}`);
@@ -218,25 +226,9 @@ async function playSong(guildId, interaction, url) {
       }
     });
 
-    // player error event, if stream error is not handled
-    player.on("error", (error) => {
-      // check flag before handling error
-      if (!streamErrorHandled) {
-        logger.error(`Error in audio player: ${error.message}`);
-        interaction.followUp(
-          `An error occurred while playing the audio: ${url},  Error: ${error.message}`,
-        );
-        connection.destroy();
-        players.delete(guildId);
-      }
-    });
-
     // Create an audio resource and play the audio
-    // If stream error is handled, do not create audio resource
-    if (!streamErrorHandled) {
-      const resource = createAudioResource(stream, { inputType: "webm/opus" });
-      player.play(resource);
-    }
+    const resource = createAudioResource(stream, { inputType: "webm/opus" });
+    player.play(resource);
   } catch (error) {
     logger.error(`Error in playing audio: ${error.message}`);
     interaction.followUp("An error occurred while trying to play the audio.");
