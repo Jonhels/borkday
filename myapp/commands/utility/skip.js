@@ -3,24 +3,15 @@ const { getVoiceConnection } = require("@discordjs/voice");
 const { queue, players, playSong } = require("./play");
 const logger = require("../../logger");
 
-// Skip cooldown
-let lastSkipTime = 0;
-const skipCooldown = 5000;
+let skipTime = 0; // Time of the last skip command
+const skipCooldown = 5000; // Cooldown time in milliseconds
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("skip")
     .setDescription("Skip the current song"),
   async execute(interaction) {
-    const now = Date.now();
-    if (now - lastSkipTime < skipCooldown) {
-      await interaction.reply("Please wait before skipping again.");
-      logger.info("Skip command cooldown triggered.");
-      return;
-    }
-    lastSkipTime = now;
-    await interaction.deferReply();
-    logger.info("Processing skip command.");
+    await interaction.deferReply(); // Defer the reply immediately after the command is triggered
 
     const guildId = interaction.guild.id;
     const connection = getVoiceConnection(guildId);
@@ -29,11 +20,12 @@ module.exports = {
       await interaction.followUp(
         "Barkbark 🐶 I am not connected to any voice channel.",
       );
-      logger.error("No voice connection found.");
       return;
     }
 
+    // Get the voice channel of the member who triggered the command
     const userVoiceChannel = interaction.member.voice.channel;
+
     if (
       !userVoiceChannel ||
       userVoiceChannel.id !== connection.joinConfig.channelId
@@ -41,40 +33,46 @@ module.exports = {
       await interaction.followUp(
         "Barkbark 🐶 You need to be in the same voice channel to skip songs.",
       );
-      logger.error("User not in the correct voice channel.");
+      return;
+    }
+
+    const currentTime = Date.now();
+    if (currentTime < skipTime + skipCooldown) {
+      const timeLeft = Math.ceil(
+        (skipTime + skipCooldown - currentTime) / 1000,
+      );
+      await interaction.followUp(
+        `Please wait ${timeLeft} more second(s) to skip again.`,
+      );
       return;
     }
 
     const player = players.get(guildId);
-    if (!player) {
-      await interaction.followUp("Barkbark 🐶 No player found.");
-      logger.error("Player not found for guild.");
-      return;
-    }
-
     const currentQueue = queue.get(guildId);
+
     if (!currentQueue || currentQueue.length === 0) {
       await interaction.followUp("Barkbark 🐶 There are no songs to skip.");
-      logger.error("No songs in queue to skip.");
       return;
     }
 
+    // Skip the current song
     player.stop();
+
+    // Remove the current song from the queue
     currentQueue.shift();
-    logger.info("Song skipped.");
 
     if (currentQueue.length > 0) {
       const nextSongUrl = currentQueue[0];
       playSong(guildId, interaction, nextSongUrl);
+      // Inform about the number of songs left after skipping
       await interaction.followUp(
         `Skipped! 🎵 ${currentQueue.length} song(s) left in the queue.`,
       );
-      logger.info("Next song started.");
     } else {
       await interaction.followUp(
         "Barkbark 🐶 No more songs in the queue. The queue is now empty.",
       );
-      logger.info("Queue is now empty.");
     }
+    skipTime = currentTime;
   },
 };
