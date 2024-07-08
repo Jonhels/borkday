@@ -48,14 +48,6 @@ module.exports = {
     // Check if the bot has permission to join and speak in the voice channel
     const connection = getVoiceConnection(guildId);
 
-    // verify connection status and destroy if necessary
-    if (
-      connection &&
-      connection.state.status !== VoiceConnectionStatus.Destroyed
-    ) {
-      connection.destroy();
-    }
-
     // Check if bot is connected in another channel
     if (connection && connection.joinConfig.channelId !== userVoiceChannel.id) {
       await interaction.followUp(
