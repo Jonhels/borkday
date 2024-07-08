@@ -48,6 +48,14 @@ module.exports = {
     // Check if the bot has permission to join and speak in the voice channel
     const connection = getVoiceConnection(guildId);
 
+    // verify connection status and destroy if necessary
+    if (
+      connection &&
+      connection.state.status !== VoiceConnectionStatus.Destroyed
+    ) {
+      connection.destroy();
+    }
+
     // Check if bot is connected in another channel
     if (connection && connection.joinConfig.channelId !== userVoiceChannel.id) {
       await interaction.followUp(
@@ -201,7 +209,19 @@ async function playSong(guildId, interaction, url) {
       });
     }
 
-    const stream = ytdl(url, { filter: "audioonly", quality: "highestaudio" });
+    // format is mp4a.40.2, and container is mp4. We want to extract the audio stream
+    const stream = ytdl(url, {
+      quality: "highestaudio",
+      filter: (format) =>
+        format.container === "mp4" && format.audioCodec === "mp4a.40.2",
+    });
+
+    stream.on("info", (info) => {
+      logger.info(
+        `Selected format: ${info.formats.map((f) => `${f.container}, ${f.audioCodec}`).join("; ")}`,
+      );
+    });
+
     const resource = createAudioResource(stream, { inputType: "webm/opus" });
     player.play(resource);
   } catch (error) {
