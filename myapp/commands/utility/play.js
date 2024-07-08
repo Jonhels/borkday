@@ -194,9 +194,9 @@ async function playSong(guildId, interaction, url) {
       });
 
       player.on("error", (error) => {
-        logger.error(`Error in audio player: ${error.message}`);
+        logger.error(`Error in audio player: ${error.message}, audio: ${url}`);
         interaction.followUp(
-          `An error occurred while playing the audio: ${url}, Error: ${error.message}, barkbark 🐶`,
+          `An error occurred while playing the audio: ${url}. This might be due to an unsupported format or the video is private.`,
         );
         connection.destroy();
         players.delete(guildId);

@@ -3,12 +3,22 @@ const { getVoiceConnection } = require("@discordjs/voice");
 const { queue, players, playSong } = require("./play");
 const logger = require("../../logger");
 
+// Skip cooldown
+let lastSkipTime = 0;
+const skipCooldown = 5000;
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("skip")
     .setDescription("Skip the current song"),
   async execute(interaction) {
-    await interaction.deferReply(); // Defer the reply immediately after the command is triggered
+    const now = Date.now();
+    if (now - lastSkipTime < skipCooldown) {
+      await interaction.followUp("Please wait before skipping again.");
+      return;
+    }
+    lastSkipTime = now;
+    await interaction.deferReply();
 
     const guildId = interaction.guild.id;
     const connection = getVoiceConnection(guildId);
