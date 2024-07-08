@@ -201,7 +201,7 @@ async function playSong(guildId, interaction, url) {
       });
     }
 
-    const stream = ytdl(url, { filter: "audioonly", quality: "highest" });
+    const stream = ytdl(url, { filter: "audioonly", quality: "highestaudio" });
     const resource = createAudioResource(stream, { inputType: "webm/opus" });
     player.play(resource);
   } catch (error) {
