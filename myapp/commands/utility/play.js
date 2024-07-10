@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, CommandInteraction } = require("discord.js");
 const {
   joinVoiceChannel,
   createAudioPlayer,
@@ -16,6 +16,11 @@ const ytpl = require("ytpl");
 const queue = new Map();
 const players = new Map();
 
+/**
+ * Module for adding a song or playlist to the queue and playing it.
+ * Maps are used to store the queue and players for each guild.
+ */
+
 module.exports = {
   queue,
   players,
@@ -29,6 +34,11 @@ module.exports = {
         .setDescription("The YouTube URL of the song or playlist")
         .setRequired(true),
     ),
+
+  /**
+   * Executes the play command, adding a song or playlist to the queue.
+   * @param {CommandInteraction} interaction - The interaction object created when an user invokes the /play command.
+   */
   async execute(interaction) {
     await interaction.deferReply();
 
@@ -74,6 +84,12 @@ module.exports = {
 };
 
 // Add support for YouTube playlist (ytpl)
+
+/**
+ * Adds a YouTube playlist to the queue.
+ * @param {CommandInteraction} interaction - The interaction object created when an user invokes the /play command.
+ * @param {string} url - The youtube playlist URL.
+ */
 async function addPlaylistToQueue(interaction, url) {
   const guildId = interaction.guildId;
   const playlistIdMatch = url.match(/(?:list=)([a-zA-Z0-9_-]+)/);
@@ -123,6 +139,12 @@ async function addPlaylistToQueue(interaction, url) {
 }
 
 // Add support for adding a single song to the queue
+
+/**
+ * Adds a single song to the queue.
+ * @param {CommandInteraction} interaction - The interaction object created when an user invokes the /play command.
+ * @param {string} url - The youtube video URL.
+ */
 async function addSongToQueue(interaction, url) {
   if (!ytdl.validateURL(url)) {
     await interaction.followUp(
@@ -147,6 +169,15 @@ async function addSongToQueue(interaction, url) {
 }
 
 // playSong function to play the song, fetch additional videos from the playlist, and update the queue
+
+/**
+ * Plays a song in the voice channel
+ * @param {string} guildId - The guild ID where the song is being played.
+ * @param {CommandInteraction} interaction - The interaction object created when an user invokes the /play command.
+ * @param {string} url - The youtube video URL.
+ * @returns {Promise<void>} - A Promise that resolves when the song is played.
+ * @throws {Error} - Throws an error if there is an issue playing the song.
+ */
 async function playSong(guildId, interaction, url) {
   let connection = getVoiceConnection(guildId);
   if (!connection) {
@@ -158,6 +189,7 @@ async function playSong(guildId, interaction, url) {
   }
 
   try {
+    // Ensure the connection is ready before playing the song
     await entersState(connection, VoiceConnectionStatus.Ready, 30e3);
     let player = players.get(guildId);
     if (!player) {
@@ -165,6 +197,7 @@ async function playSong(guildId, interaction, url) {
       connection.subscribe(player);
       players.set(guildId, player);
 
+      // Handle audio player events
       player.on(AudioPlayerStatus.Playing, () => {
         const songQueue = queue.get(guildId); // Ensure you fetch the latest queue state
         if (songQueue.length > 0) {
@@ -174,6 +207,7 @@ async function playSong(guildId, interaction, url) {
         }
       });
 
+      // Handle audio player status changes
       player.on(AudioPlayerStatus.Idle, async () => {
         logger.info("The bot has finished playing the audio");
         const songQueue = queue.get(guildId) || [];
@@ -193,6 +227,7 @@ async function playSong(guildId, interaction, url) {
         }
       });
 
+      // Handle audio player errors
       player.on("error", (error) => {
         logger.error(`Error in audio player: ${error.message}`);
         interaction.followUp(
@@ -203,6 +238,7 @@ async function playSong(guildId, interaction, url) {
       });
     }
 
+    // Fetch the audio stream from the YouTube URL
     const stream = ytdl(url, { filter: "audioonly", quality: "highestaudio" });
     stream.on("error", (error) => {
       // Log error, notify users, update queue, and attempt to play next song

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, CommandInteraction } = require("discord.js");
 const {
   getVoiceConnection,
   VoiceConnectionStatus,
@@ -6,10 +6,18 @@ const {
 const { queue, players } = require("./play");
 const logger = require("../../logger");
 
+/**
+ * Module for stopping the current song/playlist and clearing the queue in a guild.
+ */
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("stop")
     .setDescription("Stop the current song and clear the queue"),
+
+  /**
+   * Executes the stop command, stopping the current song/playlist and clearing the queue.
+   * @param {CommandInteraction} interaction - The interaction object created when an user invokes the /stop command.
+   */
   async execute(interaction) {
     const guildId = interaction.guild.id;
     const connection = getVoiceConnection(guildId);

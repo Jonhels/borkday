@@ -18,7 +18,9 @@ const {
 const token = process.env.DISCORD_TOKEN;
 const clientId = process.env.CLIENT_ID;
 
-// Create a new client instance
+/**
+ * Create a new client instance
+ */
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
 });
@@ -26,7 +28,9 @@ const client = new Client({
 // Create a new collection for commands
 client.commands = new Collection();
 
-// Read the commands folder and filter out all files that are not .js files
+/**
+ * Reads the 'commands' directory and registers all command modules found.
+ */
 const folderPath = path.join(__dirname, "commands"); // Get the path of the commands folder
 const commandFolders = fs.readdirSync(folderPath); // Read the commands folder
 
@@ -52,11 +56,16 @@ for (const folder of commandFolders) {
   }
 }
 
-// On client start event, log the client user tag to the console
+/**
+ * Event listener for the client 'ready' event to log when the client is ready.
+ */
 client.once(Events.ClientReady, (readyClient) => {
   logger.info(`Client started. Logged in as ${readyClient.user.tag}`);
 });
 
+/**
+ * Event listener for the client joining a new guild to deploy commands.
+ */
 client.on(Events.GuildCreate, async (guild) => {
   logger.info(`Joined new guild: ${guild.id}`);
 
@@ -81,6 +90,9 @@ client.on(Events.GuildCreate, async (guild) => {
   }
 });
 
+/**
+ * Event listener for command interactions to execute corresponding commands.
+ */
 client.on(Events.InteractionCreate, async (interaction) => {
   // If the interaction is not a command, return
   if (!interaction.isChatInputCommand()) return;
