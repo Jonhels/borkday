@@ -33,8 +33,9 @@ npm install should install all dependencies when in app directory.
 This bot is free to use and modify. I only made this bot to have it in my own discord servers, but since i have it public on github you can use it as well. This bot is ment to be a template for any discord bot that you want to create. You can use the code as you like, but please give me credit if you use it in your own project. From Jonhels
 
 ## Testbuild/development build
-I now have a development build that is where i will work on future improvement and test them when i got time. For this i have a branch and enviroment called development. 
-The development bot of barkbot will be here. The production build is still the correct bot to use if you just want to use the application to play music in your discord server. 
+I now have a development build that is where i will work on future improvement and test them when i got time. For this i have a branch and enviroment called development.
+The development bot of barkbot will be here. The production build is still the correct bot to use if you just want to use the application to play music in your discord server.
 
 
 https://discord.com/oauth2/authorize?client_id=561955129541001216&permissions=580552880080960&integration_type=0&scope=bot
+.. new ip
